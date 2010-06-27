@@ -7,8 +7,11 @@ License:	GPL v2
 Group:		Applications/Networking
 Source0:	http://rtmpdump.mplayerhq.hu/download/%{name}-%{version}.tar.gz
 # Source0-md5:	10681c2fe41194a97d508d0e6bbfe74f
-#Patch0:		%{name}-libtool.patch
+Patch0:		%{name}-libtool.patch
 URL:		http://rtmpdump.mplayerhq.hu/
+BuildRequires:	libtool
+BuildRequires:	openssl-devel
+BuildRequires:	zlib-devel
 Requires:	librtmp = %{version}-%{release}
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 
@@ -28,6 +31,8 @@ rtmp library.
 Summary:	Header files and development documentation for rtmp library
 Group:		Development/Libraries
 Requires:	librtmp = %{version}-%{release}
+Requires:	openssl-devel
+Requires:	zlib-devel
 
 %description -n librtmp-devel
 Header files and development documentation for rtmp library.
@@ -42,7 +47,7 @@ Static version of rtmp library.
 
 %prep
 %setup -q
-#%%patch0 -p1
+%patch0 -p1
 
 %build
 %{__make} \
@@ -55,7 +60,10 @@ Static version of rtmp library.
 rm -rf $RPM_BUILD_ROOT
 
 %{__make} install \
-	DESTDIR=$RPM_BUILD_ROOT
+	DESTDIR=$RPM_BUILD_ROOT \
+	libdir=%{_libdir} \
+	mandir=%{_mandir} \
+	prefix=%{_prefix}
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -66,7 +74,12 @@ rm -rf $RPM_BUILD_ROOT
 %files
 %defattr(644,root,root,755)
 %doc README
-%attr(755,root,root) %{_bindir}/rtmp*
+%attr(755,root,root) %{_bindir}/rtmpdump
+%attr(755,root,root) %{_sbindir}/rtmpgw
+%attr(755,root,root) %{_sbindir}/rtmpsrv
+%attr(755,root,root) %{_sbindir}/rtmpsuck
+%{_mandir}/man1/rtmpdump.1*
+%{_mandir}/man8/rtmpgw.8*
 
 %files -n librtmp
 %defattr(644,root,root,755)
@@ -77,8 +90,9 @@ rm -rf $RPM_BUILD_ROOT
 %defattr(644,root,root,755)
 %attr(755,root,root) %{_libdir}/librtmp.so
 %{_libdir}/librtmp.la
-%{_includedir}/rtmp
+%{_includedir}/librtmp
 %{_pkgconfigdir}/librtmp.pc
+%{_mandir}/man3/librtmp.3*
 
 %files -n librtmp-static
 %defattr(644,root,root,755)
