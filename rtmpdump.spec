@@ -2,7 +2,7 @@
 Summary:	A utility for getting files from RTMP servers
 Name:		rtmpdump
 Version:	2.2e
-Release:	0.1
+Release:	1
 License:	GPL v2
 Group:		Applications/Networking
 Source0:	http://rtmpdump.mplayerhq.hu/download/%{name}-%{version}.tar.gz
@@ -17,8 +17,8 @@ BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 
 %description
 rtmpdump is a toolkit for RTMP streams. All forms of RTMP are
-supported, including rtmp://, rtmpt://, rtmpe://, rtmpte://
-and rtmps://.
+supported, including rtmp://, rtmpt://, rtmpe://, rtmpte:// and
+rtmps://.
 
 %package -n librtmp
 Summary:	rtmp library
