@@ -1,0 +1,85 @@
+#
+Summary:	A utility for getting files from RTMP servers
+Name:		rtmpdump
+Version:	2.2e
+Release:	0.1
+License:	GPL v2
+Group:		Applications/Networking
+Source0:	http://rtmpdump.mplayerhq.hu/download/%{name}-%{version}.tar.gz
+# Source0-md5:	10681c2fe41194a97d508d0e6bbfe74f
+#Patch0:		%{name}-libtool.patch
+URL:		http://rtmpdump.mplayerhq.hu/
+Requires:	librtmp = %{version}-%{release}
+BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
+
+%description
+rtmpdump is a toolkit for RTMP streams. All forms of RTMP are
+supported, including rtmp://, rtmpt://, rtmpe://, rtmpte://
+and rtmps://.
+
+%package -n librtmp
+Summary:	rtmp library
+Group:		Libraries
+
+%description -n librtmp
+rtmp library.
+
+%package -n librtmp-devel
+Summary:	Header files and development documentation for rtmp library
+Group:		Development/Libraries
+Requires:	librtmp = %{version}-%{release}
+
+%description -n librtmp-devel
+Header files and development documentation for rtmp library.
+
+%package -n librtmp-static
+Summary:	Static version of rtmp library
+Group:		Development/Libraries
+Requires:	librtmp-devel = %{version}-%{release}
+
+%description -n librtmp-static
+Static version of rtmp library.
+
+%prep
+%setup -q
+#%%patch0 -p1
+
+%build
+%{__make} \
+	libdir=%{_libdir} \
+	CC="%{__cc}" \
+	OPT="%{rpmcppflags} %{rpmcflags}" \
+	XLDFLAGS="%{rpmldflags}"
+
+%install
+rm -rf $RPM_BUILD_ROOT
+
+%{__make} install \
+	DESTDIR=$RPM_BUILD_ROOT
+
+%clean
+rm -rf $RPM_BUILD_ROOT
+
+%post	-n librtmp -p /sbin/ldconfig
+%postun -n librtmp -p /sbin/ldconfig
+
+%files
+%defattr(644,root,root,755)
+%doc README
+%attr(755,root,root) %{_bindir}/rtmp*
+
+%files -n librtmp
+%defattr(644,root,root,755)
+%attr(755,root,root) %{_libdir}/librtmp.so.*.*.*
+%attr(755,root,root) %ghost %{_libdir}/librtmp.so.0
+
+%files -n librtmp-devel
+%defattr(644,root,root,755)
+%attr(755,root,root) %{_libdir}/librtmp.so
+%{_libdir}/librtmp.la
+%{_includedir}/rtmp
+%{_pkgconfigdir}/librtmp.pc
+
+%files -n librtmp-static
+%defattr(644,root,root,755)
+%{_libdir}/librtmp.a
