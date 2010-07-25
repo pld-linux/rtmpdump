@@ -1,8 +1,8 @@
 diff --git a/Makefile b/Makefile
-index 3618dcc..3053106 100644
+index 7470eb4..4f6cdb0 100644
 --- a/Makefile
 +++ b/Makefile
-@@ -2,8 +2,10 @@ VERSION=v2.2e
+@@ -2,8 +2,10 @@ VERSION=v2.3
  
  prefix=/usr/local
  
@@ -33,7 +33,7 @@ index 3618dcc..3053106 100644
 +	$(LIBTOOL) --tag=CC --mode=install $(INSTALL) rtmpgw$(EXT) rtmpsrv$(EXT) rtmpsuck$(EXT) $(SBINDIR)
  	cp rtmpdump.1 $(MANDIR)/man1
  	cp rtmpgw.8 $(MANDIR)/man8
--	@cd librtmp; $(MAKE) install $(MAKEFLAGS)
+-	@cd librtmp; $(MAKE) install
  
  clean:
  	rm -f *.o rtmpdump$(EXT) rtmpgw$(EXT) rtmpsrv$(EXT) rtmpsuck$(EXT)
@@ -73,10 +73,10 @@ index 3618dcc..3053106 100644
 +rtmpsuck.lo: rtmpsuck.c $(INCRTMP) Makefile
 +thread.lo: thread.c thread.h
 diff --git a/librtmp/Makefile b/librtmp/Makefile
-index 88fd611..8225d28 100644
+index 6774db7..1782fb0 100644
 --- a/librtmp/Makefile
 +++ b/librtmp/Makefile
-@@ -2,9 +2,11 @@ VERSION=v2.2e
+@@ -2,9 +2,11 @@ VERSION=v2.3
  
  prefix=/usr/local
  
@@ -86,49 +86,38 @@ index 88fd611..8225d28 100644
  AR=$(CROSS_COMPILE)ar
 +INSTALL=install
  
+ SYS=posix
  CRYPTO=OPENSSL
- #CRYPTO=GNUTLS
-@@ -14,12 +16,16 @@ DEF_GNUTLS=-DUSE_GNUTLS
- DEF_=-DNO_CRYPTO
- REQ_GNUTLS=gnutls
- REQ_OPENSSL=libssl,libcrypto
-+LIB_GNUTLS=-lgnutls -lgcrypt
-+LIB_OPENSSL=-lssl -lcrypto
- CRYPTO_REQ=$(REQ_$(CRYPTO))
- CRYPTO_DEF=$(DEF_$(CRYPTO))
-+CRYPTO_LIB=$(LIB_$(CRYPTO))
- 
- DEF=-DRTMPDUMP_VERSION=\"$(VERSION)\" $(CRYPTO_DEF) $(XDEF)
- OPT=-O2
- CFLAGS=-Wall $(XCFLAGS) $(INC) $(DEF) $(OPT)
-+LIBS=$(CRYPTO_LIB) -lz
- 
- incdir=$(prefix)/include/librtmp
- libdir=$(prefix)/lib
-@@ -28,27 +34,30 @@ INCDIR=$(DESTDIR)$(incdir)
+@@ -50,42 +52,32 @@ INCDIR=$(DESTDIR)$(incdir)
  LIBDIR=$(DESTDIR)$(libdir)
  MANDIR=$(DESTDIR)$(mandir)
  
--all:	librtmp.a
+-OBJS=rtmp.o log.o amf.o hashswf.o parseurl.o
++OBJS=rtmp.lo log.lo amf.lo hashswf.lo parseurl.lo
+ 
+-all:	librtmp.a $(SO_LIB)
 +all:	librtmp.la
  
  clean:
--	rm -f *.o *.a
+-	rm -f *.o *.a *.so *.$(SO_EXT)
 +	$(LIBTOOL) --tag=CC --mode=clean rm
  
--librtmp.a: rtmp.o log.o amf.o hashswf.o parseurl.o
+-librtmp.a: $(OBJS)
 -	$(AR) rs $@ $?
-+librtmp.la: rtmp.lo log.lo amf.lo hashswf.lo parseurl.lo
-+	$(LIBTOOL) --tag=CC --mode=link $(CC) $(CFLAGS) $(LDFLAGS) -rpath $(libdir) -o $@ $^ $> $(LIBS)
++librtmp.la: $(OBJS)
++	$(LIBTOOL) --tag=CC --mode=link $(CC) $(CFLAGS) $(LDFLAGS) -rpath $(libdir) -o $@ $^ $> $(CRYPTO_LIB)
+ 
+-librtmp.$(SO_EXT): $(OBJS)
+-	$(CC) -shared -Wl,-soname,$@ $(LDFLAGS) -o $@ $^ $> $(CRYPTO_LIB)
+-	ln -sf $@ librtmp.so
++%.lo:	%.c
++	$(LIBTOOL) --tag=CC --mode=compile $(CC) $(CFLAGS) -c -o $@ $<
  
 -log.o: log.c log.h Makefile
 -rtmp.o: rtmp.c rtmp.h rtmp_sys.h handshake.h dh.h log.h amf.h Makefile
 -amf.o: amf.c amf.h bytes.h log.h Makefile
 -hashswf.o: hashswf.c http.h rtmp.h rtmp_sys.h Makefile
 -parseurl.o: parseurl.c rtmp.h rtmp_sys.h log.h Makefile
-+%.lo:	%.c
-+	$(LIBTOOL) --tag=CC --mode=compile $(CC) $(CFLAGS) -c -o $@ $<
-+
 +log.lo: log.c log.h Makefile
 +rtmp.lo: rtmp.c rtmp.h rtmp_sys.h handshake.h dh.h log.h amf.h Makefile
 +amf.lo: amf.c amf.h bytes.h log.h Makefile
@@ -139,11 +128,20 @@ index 88fd611..8225d28 100644
  	sed -e "s;@prefix@;$(prefix);" -e "s;@VERSION@;$(VERSION);" \
  		-e "s;@CRYPTO_REQ@;$(CRYPTO_REQ);" librtmp.pc.in > $@
  
--install:	librtmp.a librtmp.pc
+-install:	install_base $(SO_INST)
+-
+-install_base:	librtmp.a librtmp.pc
 +install:	librtmp.la librtmp.pc
  	-mkdir -p $(INCDIR) $(LIBDIR)/pkgconfig $(MANDIR)/man3
-+	$(LIBTOOL) --tag=CC --mode=install $(INSTALL) librtmp.la $(LIBDIR)/
  	cp amf.h http.h log.h rtmp.h $(INCDIR)
 -	cp librtmp.a $(LIBDIR)
++	$(LIBTOOL) --tag=CC --mode=install $(INSTALL) librtmp.la $(LIBDIR)/
  	cp librtmp.pc $(LIBDIR)/pkgconfig
  	cp librtmp.3 $(MANDIR)/man3
+-
+-install_so.0:	librtmp.so.0
+-	cp librtmp.so.0 $(LIBDIR)
+-	cd $(LIBDIR); ln -sf librtmp.so.0 librtmp.so
+-
+-install_dll:	librtmp.dll
+-	cp librtmp.dll $(BINDIR)
