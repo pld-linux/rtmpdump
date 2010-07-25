@@ -1,16 +1,22 @@
 #
+%bcond_without	gnutls		# build with GNU TLS instead of OpenSSL (use same as curl)
+#
 Summary:	A utility for getting files from RTMP servers
 Name:		rtmpdump
-Version:	2.2e
+Version:	2.3
 Release:	1
 License:	GPL v2
 Group:		Applications/Networking
-Source0:	http://rtmpdump.mplayerhq.hu/download/%{name}-%{version}.tar.gz
-# Source0-md5:	10681c2fe41194a97d508d0e6bbfe74f
+Source0:	http://rtmpdump.mplayerhq.hu/download/%{name}-%{version}.tgz
+# Source0-md5:	eb961f31cd55f0acf5aad1a7b900ef59
 Patch0:		%{name}-libtool.patch
 URL:		http://rtmpdump.mplayerhq.hu/
-BuildRequires:	libtool
+%if %{with gnutls}
+BuildRequires:	gnutls-devel
+%else
 BuildRequires:	openssl-devel
+%endif
+BuildRequires:	libtool
 BuildRequires:	zlib-devel
 Requires:	librtmp = %{version}-%{release}
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
@@ -51,6 +57,7 @@ Static version of rtmp library.
 
 %build
 %{__make} \
+	CRYPTO=%{?with_gnutls:GNUTLS}%{!?with_gnutls:OPENSSL} \
 	libdir=%{_libdir} \
 	CC="%{__cc}" \
 	OPT="%{rpmcppflags} %{rpmcflags}" \
