@@ -1,7 +1,9 @@
 #
-%bcond_without	gnutls		# build with GNU TLS instead of OpenSSL (use same as curl)
+# Conditional build:
+%bcond_without	gnutls		# GNU TLS instead of OpenSSL (use same as curl)
 #
 Summary:	A utility for getting files from RTMP servers
+Summary(pl.UTF-8):	Narzędzie do pobierania plików z sewerów RTMP
 Name:		rtmpdump
 Version:	2.3
 Release:	1
@@ -14,7 +16,7 @@ URL:		http://rtmpdump.mplayerhq.hu/
 %if %{with gnutls}
 BuildRequires:	gnutls-devel
 %else
-BuildRequires:	openssl-devel
+BuildRequires:	openssl-devel >= 0.9.8
 %endif
 BuildRequires:	libtool
 BuildRequires:	zlib-devel
@@ -26,30 +28,55 @@ rtmpdump is a toolkit for RTMP streams. All forms of RTMP are
 supported, including rtmp://, rtmpt://, rtmpe://, rtmpte:// and
 rtmps://.
 
+%description -l pl.UTF-8
+rtmpdump to zestaw narzędzi do strumieni RTMP. Obsługiwane są
+wszystkie postaci RTMP, w tym rtmp://, rtmpt://, rtmpe://, rtmpte://
+oraz rtmps://.
+
 %package -n librtmp
-Summary:	rtmp library
+Summary:	RTMP library - RTMPDump Real-Time Messaging Protocol API
+Summary(pl.UTF-8):	Biblioteka RTMP - API do obsługi protokołu Real-Time Messaging Protocol
+License:	LGPL v2.1+
 Group:		Libraries
 
 %description -n librtmp
-rtmp library.
+RTMP library - RTMPDump Real-Time Messaging Protocol API.
+
+%description -n librtmp -l pl.UTF-8
+Biblioteka RTMP - API do obsługi protokołu RTMP (Real-Time Messaging
+Protocol).
 
 %package -n librtmp-devel
-Summary:	Header files and development documentation for rtmp library
+Summary:	Header files for RTMP library
+Summary(pl.UTF-8):	Pliki nagłówkowe biblioteki RTMP
+License:	LGPL v2.1+
 Group:		Development/Libraries
 Requires:	librtmp = %{version}-%{release}
-Requires:	openssl-devel
+%if %{with gnutls}
+Requires:	gnutls-devel
+%else
+Requires:	openssl-devel >= 0.9.8
+%endif
 Requires:	zlib-devel
 
 %description -n librtmp-devel
-Header files and development documentation for rtmp library.
+Header files for RTMP library.
+
+%description -n librtmp-devel -l pl.UTF-8
+Pliki nagłówkowe biblioteki RTMP.
 
 %package -n librtmp-static
-Summary:	Static version of rtmp library
+Summary:	Static version of RTMP library
+Summary(pl.UTF-8):	Statyczna wersja biblioteki RTMP
+License:	LGPL v2.1+
 Group:		Development/Libraries
 Requires:	librtmp-devel = %{version}-%{release}
 
 %description -n librtmp-static
-Static version of rtmp library.
+Static version of RTMP library.
+
+%description -n librtmp-static -l pl.UTF-8
+Statyczna wersja biblioteki RTMP.
 
 %prep
 %setup -q
@@ -61,7 +88,7 @@ Static version of rtmp library.
 	libdir=%{_libdir} \
 	CC="%{__cc}" \
 	OPT="%{rpmcppflags} %{rpmcflags}" \
-	XLDFLAGS="%{rpmldflags}"
+	LDFLAGS="%{rpmldflags}"
 
 %install
 rm -rf $RPM_BUILD_ROOT
