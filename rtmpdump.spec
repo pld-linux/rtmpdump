@@ -6,7 +6,7 @@ Summary:	A utility for getting files from RTMP servers
 Summary(pl.UTF-8):	Narzędzie do pobierania plików z sewerów RTMP
 Name:		rtmpdump
 Version:	2.3
-Release:	2.1
+Release:	3
 License:	GPL v2
 Group:		Applications/Networking
 Source0:	http://rtmpdump.mplayerhq.hu/download/%{name}-%{version}.tgz
