@@ -1,12 +1,12 @@
 #
 # Conditional build:
-%bcond_without	gnutls		# GNU TLS instead of OpenSSL (use same as curl)
+%bcond_with	gnutls		# GNU TLS instead of OpenSSL (use same as curl)
 #
 Summary:	A utility for getting files from RTMP servers
 Summary(pl.UTF-8):	Narzędzie do pobierania plików z sewerów RTMP
 Name:		rtmpdump
 Version:	2.3
-Release:	2
+Release:	2.1
 License:	GPL v2
 Group:		Applications/Networking
 Source0:	http://rtmpdump.mplayerhq.hu/download/%{name}-%{version}.tgz
