@@ -1,0 +1,753 @@
+commit 272a91d06d71c2a326996f62797ed9ab42f69859
+Author: hyc <hyc@400ebc74-4327-4243-bc38-086b20814532>
+Date:   Wed Jun 30 22:34:59 2010 +0000
+
+    zlib dependency is only when CRYPTO is enabled
+    
+    
+    git-svn-id: svn://svn.mplayerhq.hu/rtmpdump/trunk@536 400ebc74-4327-4243-bc38-086b20814532
+
+diff --git a/Makefile b/Makefile
+index 7470eb4..c7767b4 100644
+--- a/Makefile
++++ b/Makefile
+@@ -11,9 +11,10 @@ SYS=posix
+ CRYPTO=OPENSSL
+ #CRYPTO=POLARSSL
+ #CRYPTO=GNUTLS
+-LIB_GNUTLS=-lgnutls -lgcrypt
+-LIB_OPENSSL=-lssl -lcrypto
+-LIB_POLARSSL=-lpolarssl
++LIBZ=-lz
++LIB_GNUTLS=-lgnutls -lgcrypt $(LIBZ)
++LIB_OPENSSL=-lssl -lcrypto$ (LIBZ)
++LIB_POLARSSL=-lpolarssl $(LIBZ)
+ CRYPTO_LIB=$(LIB_$(CRYPTO))
+ DEF_=-DNO_CRYPTO
+ CRYPTO_DEF=$(DEF_$(CRYPTO))
+@@ -33,7 +34,7 @@ MANDIR=$(DESTDIR)$(mandir)
+ 
+ LIBS_posix=
+ LIBS_mingw=-lws2_32 -lwinmm -lgdi32
+-LIBS=$(CRYPTO_LIB) -lz $(LIBS_$(SYS)) $(XLIBS)
++LIBS=$(CRYPTO_LIB) $(LIBS_$(SYS)) $(XLIBS)
+ 
+ THREADLIB_posix=-lpthread
+ THREADLIB_mingw=
+diff --git a/librtmp/hashswf.c b/librtmp/hashswf.c
+index 06d2bbb..277f21c 100644
+--- a/librtmp/hashswf.c
++++ b/librtmp/hashswf.c
+@@ -66,10 +66,10 @@
+ extern void RTMP_TLS_Init();
+ extern TLS_CTX RTMP_TLS_ctx;
+ 
+-#endif /* CRYPTO */
+-
+ #include <zlib.h>
+ 
++#endif /* CRYPTO */
++
+ #define	AGENT	"Mozilla/5.0"
+ 
+ HTTPResult
+commit 6556b9f9328acb1199dc1cc3f22fa82c86b51c8a
+Author: hyc <hyc@400ebc74-4327-4243-bc38-086b20814532>
+Date:   Thu Jul 1 12:00:43 2010 +0000
+
+    Fix typo
+    
+    
+    git-svn-id: svn://svn.mplayerhq.hu/rtmpdump/trunk@537 400ebc74-4327-4243-bc38-086b20814532
+
+diff --git a/Makefile b/Makefile
+index c7767b4..1fcdd78 100644
+--- a/Makefile
++++ b/Makefile
+@@ -13,7 +13,7 @@ CRYPTO=OPENSSL
+ #CRYPTO=GNUTLS
+ LIBZ=-lz
+ LIB_GNUTLS=-lgnutls -lgcrypt $(LIBZ)
+-LIB_OPENSSL=-lssl -lcrypto$ (LIBZ)
++LIB_OPENSSL=-lssl -lcrypto $(LIBZ)
+ LIB_POLARSSL=-lpolarssl $(LIBZ)
+ CRYPTO_LIB=$(LIB_$(CRYPTO))
+ DEF_=-DNO_CRYPTO
+commit 24f7e724fc10d737a0f14c7741711b6b542c9d45
+Author: hyc <hyc@400ebc74-4327-4243-bc38-086b20814532>
+Date:   Thu Jul 8 10:38:33 2010 +0000
+
+    Don't link explicitly against static library
+    
+    
+    git-svn-id: svn://svn.mplayerhq.hu/rtmpdump/trunk@544 400ebc74-4327-4243-bc38-086b20814532
+
+diff --git a/Makefile b/Makefile
+index 1fcdd78..741e438 100644
+--- a/Makefile
++++ b/Makefile
+@@ -34,7 +34,7 @@ MANDIR=$(DESTDIR)$(mandir)
+ 
+ LIBS_posix=
+ LIBS_mingw=-lws2_32 -lwinmm -lgdi32
+-LIBS=$(CRYPTO_LIB) $(LIBS_$(SYS)) $(XLIBS)
++LIBS=-L librtmp -lrtmp $(CRYPTO_LIB) $(LIBS_$(SYS)) $(XLIBS)
+ 
+ THREADLIB_posix=-lpthread
+ THREADLIB_mingw=
+@@ -48,9 +48,11 @@ EXT_posix=
+ EXT_mingw=.exe
+ EXT=$(EXT_$(SYS))
+ 
+-all:	$(LIBRTMP) progs
++PROGS=rtmpdump rtmpgw rtmpsrv rtmpsuck
+ 
+-progs:	rtmpdump rtmpgw rtmpsrv rtmpsuck
++all:	$(LIBRTMP) $(PROGS)
++
++$(PROGS): $(LIBRTMP)
+ 
+ install:	progs
+ 	-mkdir -p $(BINDIR) $(SBINDIR) $(MANDIR)/man1 $(MANDIR)/man8
+@@ -69,20 +71,17 @@ FORCE:
+ $(LIBRTMP): FORCE
+ 	@cd librtmp; $(MAKE) all
+ 
+-# note: $^ is GNU Make's equivalent to BSD $>
+-# we use both since either make will ignore the one it doesn't recognize
+-
+-rtmpdump: rtmpdump.o $(LIBRTMP)
+-	$(CC) $(LDFLAGS) $^ $> -o $@$(EXT) $(LIBS)
++rtmpdump: rtmpdump.o
++	$(CC) $(LDFLAGS) -o $@$(EXT) $@.o $(LIBS)
+ 
+-rtmpsrv: rtmpsrv.o thread.o $(LIBRTMP)
+-	$(CC) $(LDFLAGS) $^ $> -o $@$(EXT) $(SLIBS)
++rtmpsrv: rtmpsrv.o thread.o
++	$(CC) $(LDFLAGS) -o $@$(EXT) $@.o thread.o $(SLIBS)
+ 
+-rtmpsuck: rtmpsuck.o thread.o $(LIBRTMP)
+-	$(CC) $(LDFLAGS) $^ $> -o $@$(EXT) $(SLIBS)
++rtmpsuck: rtmpsuck.o thread.o
++	$(CC) $(LDFLAGS) -o $@$(EXT) $@.o thread.o $(SLIBS)
+ 
+-rtmpgw: rtmpgw.o thread.o $(LIBRTMP)
+-	$(CC) $(LDFLAGS) $^ $> -o $@$(EXT) $(SLIBS)
++rtmpgw: rtmpgw.o thread.o
++	$(CC) $(LDFLAGS) -o $@$(EXT) $@.o thread.o $(SLIBS)
+ 
+ rtmpgw.o: rtmpgw.c $(INCRTMP) Makefile
+ rtmpdump.o: rtmpdump.c $(INCRTMP) Makefile
+commit 5a3d6003a9745595583015c5b3b24e7bea818790
+Author: hyc <hyc@400ebc74-4327-4243-bc38-086b20814532>
+Date:   Thu Jul 8 11:11:47 2010 +0000
+
+    Fix install target
+    
+    
+    git-svn-id: svn://svn.mplayerhq.hu/rtmpdump/trunk@545 400ebc74-4327-4243-bc38-086b20814532
+
+diff --git a/Makefile b/Makefile
+index 741e438..75628dd 100644
+--- a/Makefile
++++ b/Makefile
+@@ -54,7 +54,7 @@ all:	$(LIBRTMP) $(PROGS)
+ 
+ $(PROGS): $(LIBRTMP)
+ 
+-install:	progs
++install:	$(PROGS)
+ 	-mkdir -p $(BINDIR) $(SBINDIR) $(MANDIR)/man1 $(MANDIR)/man8
+ 	cp rtmpdump$(EXT) $(BINDIR)
+ 	cp rtmpgw$(EXT) rtmpsrv$(EXT) rtmpsuck$(EXT) $(SBINDIR)
+commit 2340f0e27cd21d624d5f915fc42182750be6fca6
+Author: hyc <hyc@400ebc74-4327-4243-bc38-086b20814532>
+Date:   Mon Jul 12 08:20:04 2010 +0000
+
+    MacOSX/Darwin shared library flags
+    
+    
+    git-svn-id: svn://svn.mplayerhq.hu/rtmpdump/trunk@546 400ebc74-4327-4243-bc38-086b20814532
+
+diff --git a/Makefile b/Makefile
+index 75628dd..fda3c74 100644
+--- a/Makefile
++++ b/Makefile
+@@ -33,10 +33,12 @@ SBINDIR=$(DESTDIR)$(sbindir)
+ MANDIR=$(DESTDIR)$(mandir)
+ 
+ LIBS_posix=
++LIBS_darwin=
+ LIBS_mingw=-lws2_32 -lwinmm -lgdi32
+ LIBS=-L librtmp -lrtmp $(CRYPTO_LIB) $(LIBS_$(SYS)) $(XLIBS)
+ 
+ THREADLIB_posix=-lpthread
++THREADLIB_darwin=-lpthread
+ THREADLIB_mingw=
+ THREADLIB=$(THREADLIB_$(SYS))
+ SLIBS=$(THREADLIB) $(LIBS)
+@@ -45,6 +47,7 @@ LIBRTMP=librtmp/librtmp.a
+ INCRTMP=librtmp/rtmp_sys.h librtmp/rtmp.h librtmp/log.h librtmp/amf.h
+ 
+ EXT_posix=
++EXT_darwin=
+ EXT_mingw=.exe
+ EXT=$(EXT_$(SYS))
+ 
+diff --git a/README b/README
+index 6607a1d..5689853 100644
+--- a/README
++++ b/README
+@@ -10,7 +10,11 @@ To compile type "make" with SYS=<platform name>, e.g.
+ 
+   $ make SYS=posix
+ 
+-for Linux, MacOSX, Unix, etc. or
++for Linux, Unix, etc. or
++
++  $ make SYS=darwin
++
++for MacOSX or
+ 
+   $ make SYS=mingw
+ 
+diff --git a/librtmp/Makefile b/librtmp/Makefile
+index 6774db7..2fd5869 100644
+--- a/librtmp/Makefile
++++ b/librtmp/Makefile
+@@ -17,6 +17,7 @@ REQ_GNUTLS=gnutls
+ REQ_OPENSSL=libssl,libcrypto
+ LIBZ=-lz
+ LIBS_posix=
++LIBS_darwin=
+ LIBS_mingw=-lws2_32 -lwinmm -lgdi32
+ LIB_GNUTLS=-lgnutls -lgcrypt $(LIBZ)
+ LIB_OPENSSL=-lssl -lcrypto $(LIBZ)
+@@ -26,9 +27,16 @@ CRYPTO_REQ=$(REQ_$(CRYPTO))
+ CRYPTO_DEF=$(DEF_$(CRYPTO))
+ 
+ SO_posix=so.0
++SO_darwin=so.0
+ SO_mingw=dll
+ SO_EXT=$(SO_$(SYS))
+ 
++SO_LDFLAGS_posix=-shared -Wl,-soname,$@
++SO_LDFLAGS_darwin=-bundle -flat_namespace -undefined suppress -fno-common \
++	-headerpad_max_install_names
++SO_LDFLAGS_mingw=
++SO_LDFLAGS=$(SO_LDFLAGS_$(SYS))
++
+ SHARED=yes
+ SODEF_yes=-fPIC
+ SOLIB_yes=librtmp.$(SO_EXT)
+@@ -40,6 +48,7 @@ SO_INST=$(SOINST_$(SHARED))
+ DEF=-DRTMPDUMP_VERSION=\"$(VERSION)\" $(CRYPTO_DEF) $(XDEF)
+ OPT=-O2
+ CFLAGS=-Wall $(XCFLAGS) $(INC) $(DEF) $(OPT) $(SO_DEF)
++LDFLAGS=$(XLDFLAGS)
+ 
+ incdir=$(prefix)/include/librtmp
+ bindir=$(prefix)/bin
+@@ -61,7 +70,7 @@ librtmp.a: $(OBJS)
+ 	$(AR) rs $@ $?
+ 
+ librtmp.$(SO_EXT): $(OBJS)
+-	$(CC) -shared -Wl,-soname,$@ $(LDFLAGS) -o $@ $^ $> $(CRYPTO_LIB)
++	$(CC) $(SO_LDFLAGS) $(LDFLAGS) -o $@ $^ $> $(CRYPTO_LIB)
+ 	ln -sf $@ librtmp.so
+ 
+ log.o: log.c log.h Makefile
+commit 13798268e10fc8c56eecf5fce297375f7fca1526
+Author: hyc <hyc@400ebc74-4327-4243-bc38-086b20814532>
+Date:   Mon Aug 9 21:46:31 2010 +0000
+
+    Fixes for Darwin - use dylib, not bundle for shared lib
+    
+    
+    git-svn-id: svn://svn.mplayerhq.hu/rtmpdump/trunk@547 400ebc74-4327-4243-bc38-086b20814532
+
+diff --git a/Makefile b/Makefile
+index fda3c74..c322e9a 100644
+--- a/Makefile
++++ b/Makefile
+@@ -35,7 +35,7 @@ MANDIR=$(DESTDIR)$(mandir)
+ LIBS_posix=
+ LIBS_darwin=
+ LIBS_mingw=-lws2_32 -lwinmm -lgdi32
+-LIBS=-L librtmp -lrtmp $(CRYPTO_LIB) $(LIBS_$(SYS)) $(XLIBS)
++LIBS=-Llibrtmp -lrtmp $(CRYPTO_LIB) $(LIBS_$(SYS)) $(XLIBS)
+ 
+ THREADLIB_posix=-lpthread
+ THREADLIB_darwin=-lpthread
+diff --git a/librtmp/Makefile b/librtmp/Makefile
+index 2fd5869..a4bf67e 100644
+--- a/librtmp/Makefile
++++ b/librtmp/Makefile
+@@ -26,13 +26,14 @@ CRYPTO_LIB=$(LIB_$(CRYPTO)) $(LIBS_$(SYS))
+ CRYPTO_REQ=$(REQ_$(CRYPTO))
+ CRYPTO_DEF=$(DEF_$(CRYPTO))
+ 
+-SO_posix=so.0
+-SO_darwin=so.0
++SO_VERSION=0
++SO_posix=so.$(SO_VERSION)
++SO_darwin=$(SO_VERSION).dylib
+ SO_mingw=dll
+ SO_EXT=$(SO_$(SYS))
+ 
+ SO_LDFLAGS_posix=-shared -Wl,-soname,$@
+-SO_LDFLAGS_darwin=-bundle -flat_namespace -undefined suppress -fno-common \
++SO_LDFLAGS_darwin=-dynamiclib -flat_namespace -undefined suppress -fno-common \
+ 	-headerpad_max_install_names
+ SO_LDFLAGS_mingw=
+ SO_LDFLAGS=$(SO_LDFLAGS_$(SYS))
+@@ -92,9 +93,13 @@ install_base:	librtmp.a librtmp.pc
+ 	cp librtmp.pc $(LIBDIR)/pkgconfig
+ 	cp librtmp.3 $(MANDIR)/man3
+ 
+-install_so.0:	librtmp.so.0
+-	cp librtmp.so.0 $(LIBDIR)
+-	cd $(LIBDIR); ln -sf librtmp.so.0 librtmp.so
++install_so.$(SO_VERSION):	librtmp.$(SO_EXT)
++	cp librtmp.$(SO_EXT) $(LIBDIR)
++	cd $(LIBDIR); ln -sf librtmp.$(SO_EXT) librtmp.so
++
++install_$(SO_VERSION).dylib:	librtmp.$(SO_EXT)
++	cp librtmp.$(SO_EXT) $(LIBDIR)
++	cd $(LIBDIR); ln -sf librtmp.$(SO_EXT) librtmp.dylib
+ 
+ install_dll:	librtmp.dll
+ 	cp librtmp.dll $(BINDIR)
+commit eea470fa5f9a5481a36dedd257549595ef7480d6
+Author: Martin Storsjo <martin@martin.st>
+Date:   Thu Mar 8 23:10:11 2012 -0800
+
+    Add support for building with gnutls with nettle as backend
+
+diff --git a/Makefile b/Makefile
+index 6ef5742..0cf41be 100644
+--- a/Makefile
++++ b/Makefile
+@@ -13,6 +13,7 @@ CRYPTO=OPENSSL
+ #CRYPTO=GNUTLS
+ LIBZ=-lz
+ LIB_GNUTLS=-lgnutls -lgcrypt $(LIBZ)
++LIB_GNUTLS_NETTLE=-lgnutls -lhogweed -lnettle -lgmp $(LIBZ)
+ LIB_OPENSSL=-lssl -lcrypto $(LIBZ)
+ LIB_POLARSSL=-lpolarssl $(LIBZ)
+ CRYPTO_LIB=$(LIB_$(CRYPTO))
+diff --git a/librtmp/Makefile b/librtmp/Makefile
+index a0125f1..353c6c8 100644
+--- a/librtmp/Makefile
++++ b/librtmp/Makefile
+@@ -21,14 +21,17 @@ CRYPTO=OPENSSL
+ DEF_POLARSSL=-DUSE_POLARSSL
+ DEF_OPENSSL=-DUSE_OPENSSL
+ DEF_GNUTLS=-DUSE_GNUTLS
++DEF_GNUTLS_NETTLE=-DUSE_GNUTLS_NETTLE
+ DEF_=-DNO_CRYPTO
+ REQ_GNUTLS=gnutls
++REQ_GNUTLS_NETTLE=gnutls
+ REQ_OPENSSL=libssl,libcrypto
+ LIBZ=-lz
+ LIBS_posix=
+ LIBS_darwin=
+ LIBS_mingw=-lws2_32 -lwinmm -lgdi32
+ LIB_GNUTLS=-lgnutls -lgcrypt $(LIBZ)
++LIB_GNUTLS_NETTLE=-lgnutls -lhogweed -lnettle -lgmp $(LIBZ)
+ LIB_OPENSSL=-lssl -lcrypto $(LIBZ)
+ LIB_POLARSSL=-lpolarssl $(LIBZ)
+ PRIVATE_LIBS=$(LIBS_$(SYS))
+diff --git a/librtmp/dh.h b/librtmp/dh.h
+index a9f3763..830000e 100644
+--- a/librtmp/dh.h
++++ b/librtmp/dh.h
+@@ -76,7 +76,8 @@ static int MDH_compute_key(uint8_t *secret, size_t len, MP_t pub, MDH *dh)
+   return 0;
+ }
+ 
+-#elif defined(USE_GNUTLS)
++#elif defined(USE_GNUTLS) || defined(USE_GNUTLS_NETTLE)
++#ifdef USE_GNUTLS
+ #include <gcrypt.h>
+ typedef gcry_mpi_t MP_t;
+ #define MP_new(m)	m = gcry_mpi_new(1)
+@@ -91,6 +92,23 @@ typedef gcry_mpi_t MP_t;
+ #define MP_bytes(u)	(gcry_mpi_get_nbits(u) + 7) / 8
+ #define MP_setbin(u,buf,len)	gcry_mpi_print(GCRYMPI_FMT_USG,buf,len,NULL,u)
+ #define MP_getbin(u,buf,len)	gcry_mpi_scan(&u,GCRYMPI_FMT_USG,buf,len,NULL)
++#else
++#include <gmp.h>
++#include <nettle/bignum.h>
++typedef mpz_ptr MP_t;
++#define MP_new(m)	m = malloc(sizeof(*m)); mpz_init2(m, 1)
++#define MP_set_w(mpi, w)	mpz_set_ui(mpi, w)
++#define MP_cmp(u, v)	mpz_cmp(u, v)
++#define MP_set(u, v)	mpz_set(u, v)
++#define MP_sub_w(mpi, w)	mpz_sub_ui(mpi, mpi, w)
++#define MP_cmp_1(mpi)	mpz_cmp_ui(mpi, 1)
++#define MP_modexp(r, y, q, p)	mpz_powm(r, y, q, p)
++#define MP_free(mpi)	mpz_clear(mpi); free(mpi)
++#define MP_gethex(u, hex, res)	u = malloc(sizeof(*u)); mpz_init2(u, 1); res = (mpz_set_str(u, hex, 16) == 0)
++#define MP_bytes(u)	(mpz_sizeinbase(u, 2) + 7) / 8
++#define MP_setbin(u,buf,len)	nettle_mpz_get_str_256(len,buf,u)
++#define MP_getbin(u,buf,len)	u = malloc(sizeof(*u)); mpz_init2(u, 1); nettle_mpz_set_str_256_u(u,len,buf)
++#endif
+ 
+ typedef struct MDH {
+   MP_t p;
+diff --git a/librtmp/handshake.h b/librtmp/handshake.h
+index 98bf3c8..4c2ea7f 100644
+--- a/librtmp/handshake.h
++++ b/librtmp/handshake.h
+@@ -59,6 +59,26 @@ typedef gcry_cipher_hd_t	RC4_handle;
+ #define RC4_encrypt2(h,l,s,d)	gcry_cipher_encrypt(h,(void *)d,l,(void *)s,l)
+ #define RC4_free(h)	gcry_cipher_close(h)
+ 
++#elif defined(USE_GNUTLS_NETTLE)
++#include <nettle/hmac.h>
++#include <nettle/arcfour.h>
++#ifndef SHA256_DIGEST_LENGTH
++#define SHA256_DIGEST_LENGTH    32
++#endif
++#undef HMAC_CTX
++#define HMAC_CTX	struct hmac_sha256_ctx
++#define HMAC_setup(ctx, key, len)	hmac_sha256_set_key(&ctx, len, key)
++#define HMAC_crunch(ctx, buf, len)	hmac_sha256_update(&ctx, len, buf)
++#define HMAC_finish(ctx, dig, dlen)	dlen = SHA256_DIGEST_LENGTH; hmac_sha256_digest(&ctx, SHA256_DIGEST_LENGTH, dig)
++#define HMAC_close(ctx)
++
++typedef struct arcfour_ctx*	RC4_handle;
++#define RC4_alloc(h)	*h = malloc(sizeof(struct arcfour_ctx))
++#define RC4_setkey(h,l,k)	arcfour_set_key(h, l, k)
++#define RC4_encrypt(h,l,d)	arcfour_crypt(h,l,(uint8_t *)d,(uint8_t *)d)
++#define RC4_encrypt2(h,l,s,d)	arcfour_crypt(h,l,(uint8_t *)d,(uint8_t *)s)
++#define RC4_free(h)	free(h)
++
+ #else	/* USE_OPENSSL */
+ #include <openssl/sha.h>
+ #include <openssl/hmac.h>
+diff --git a/librtmp/hashswf.c b/librtmp/hashswf.c
+index 0320480..8cefd3b 100644
+--- a/librtmp/hashswf.c
++++ b/librtmp/hashswf.c
+@@ -52,6 +52,17 @@
+ #define HMAC_crunch(ctx, buf, len)	gcry_md_write(ctx, buf, len)
+ #define HMAC_finish(ctx, dig, dlen)	dlen = SHA256_DIGEST_LENGTH; memcpy(dig, gcry_md_read(ctx, 0), dlen)
+ #define HMAC_close(ctx)	gcry_md_close(ctx)
++#elif defined(USE_GNUTLS_NETTLE)
++#include <nettle/hmac.h>
++#ifndef SHA256_DIGEST_LENGTH
++#define SHA256_DIGEST_LENGTH	32
++#endif
++#undef HMAC_CTX
++#define HMAC_CTX	struct hmac_sha256_ctx
++#define HMAC_setup(ctx, key, len)	hmac_sha256_set_key(&ctx, len, key)
++#define HMAC_crunch(ctx, buf, len)	hmac_sha256_update(&ctx, len, buf)
++#define HMAC_finish(ctx, dig, dlen)	dlen = SHA256_DIGEST_LENGTH; hmac_sha256_digest(&ctx, SHA256_DIGEST_LENGTH, dig)
++#define HMAC_close(ctx)
+ #else	/* USE_OPENSSL */
+ #include <openssl/ssl.h>
+ #include <openssl/sha.h>
+diff --git a/librtmp/rtmp.c b/librtmp/rtmp.c
+index 52d0254..5cd7b8d 100644
+--- a/librtmp/rtmp.c
++++ b/librtmp/rtmp.c
+@@ -34,7 +34,7 @@
+ #ifdef CRYPTO
+ #ifdef USE_POLARSSL
+ #include <polarssl/havege.h>
+-#elif defined(USE_GNUTLS)
++#elif defined(USE_GNUTLS) || defined(USE_GNUTLS_NETTLE)
+ #include <gnutls/gnutls.h>
+ #else	/* USE_OPENSSL */
+ #include <openssl/ssl.h>
+@@ -204,7 +204,7 @@ RTMP_TLS_Init()
+   /* Do this regardless of NO_SSL, we use havege for rtmpe too */
+   RTMP_TLS_ctx = calloc(1,sizeof(struct tls_ctx));
+   havege_init(&RTMP_TLS_ctx->hs);
+-#elif defined(USE_GNUTLS) && !defined(NO_SSL)
++#elif (defined(USE_GNUTLS) || defined(USE_GNUTLS_NETTLE)) && !defined(NO_SSL)
+   /* Technically we need to initialize libgcrypt ourselves if
+    * we're not going to call gnutls_global_init(). Ignoring this
+    * for now.
+diff --git a/librtmp/rtmp_sys.h b/librtmp/rtmp_sys.h
+index c3fd4a6..478c59f 100644
+--- a/librtmp/rtmp_sys.h
++++ b/librtmp/rtmp_sys.h
+@@ -81,7 +81,7 @@ typedef struct tls_ctx {
+ #define TLS_shutdown(s)	ssl_close_notify(s)
+ #define TLS_close(s)	ssl_free(s); free(s)
+ 
+-#elif defined(USE_GNUTLS)
++#elif defined(USE_GNUTLS) || defined(USE_GNUTLS_NETTLE)
+ #include <gnutls/gnutls.h>
+ typedef struct tls_ctx {
+ 	gnutls_certificate_credentials_t cred;
+commit 7340f6dbc6b3c8e552baab2e5a891c2de75cddcc
+Author: Howard Chu <hyc@highlandsun.com>
+Date:   Thu Mar 8 23:19:45 2012 -0800
+
+    Cleanup prev commit, drop gcrypt support
+
+diff --git a/Makefile b/Makefile
+index 0cf41be..a1595a8 100644
+--- a/Makefile
++++ b/Makefile
+@@ -12,8 +12,7 @@ CRYPTO=OPENSSL
+ #CRYPTO=POLARSSL
+ #CRYPTO=GNUTLS
+ LIBZ=-lz
+-LIB_GNUTLS=-lgnutls -lgcrypt $(LIBZ)
+-LIB_GNUTLS_NETTLE=-lgnutls -lhogweed -lnettle -lgmp $(LIBZ)
++LIB_GNUTLS=-lgnutls -lhogweed -lnettle -lgmp $(LIBZ)
+ LIB_OPENSSL=-lssl -lcrypto $(LIBZ)
+ LIB_POLARSSL=-lpolarssl $(LIBZ)
+ CRYPTO_LIB=$(LIB_$(CRYPTO))
+diff --git a/librtmp/Makefile b/librtmp/Makefile
+index 353c6c8..74ee3b5 100644
+--- a/librtmp/Makefile
++++ b/librtmp/Makefile
+@@ -21,17 +21,14 @@ CRYPTO=OPENSSL
+ DEF_POLARSSL=-DUSE_POLARSSL
+ DEF_OPENSSL=-DUSE_OPENSSL
+ DEF_GNUTLS=-DUSE_GNUTLS
+-DEF_GNUTLS_NETTLE=-DUSE_GNUTLS_NETTLE
+ DEF_=-DNO_CRYPTO
+ REQ_GNUTLS=gnutls
+-REQ_GNUTLS_NETTLE=gnutls
+ REQ_OPENSSL=libssl,libcrypto
+ LIBZ=-lz
+ LIBS_posix=
+ LIBS_darwin=
+ LIBS_mingw=-lws2_32 -lwinmm -lgdi32
+-LIB_GNUTLS=-lgnutls -lgcrypt $(LIBZ)
+-LIB_GNUTLS_NETTLE=-lgnutls -lhogweed -lnettle -lgmp $(LIBZ)
++LIB_GNUTLS=-lgnutls -lhogweed -lnettle -lgmp $(LIBZ)
+ LIB_OPENSSL=-lssl -lcrypto $(LIBZ)
+ LIB_POLARSSL=-lpolarssl $(LIBZ)
+ PRIVATE_LIBS=$(LIBS_$(SYS))
+diff --git a/librtmp/dh.h b/librtmp/dh.h
+index 830000e..9959532 100644
+--- a/librtmp/dh.h
++++ b/librtmp/dh.h
+@@ -76,23 +76,7 @@ static int MDH_compute_key(uint8_t *secret, size_t len, MP_t pub, MDH *dh)
+   return 0;
+ }
+ 
+-#elif defined(USE_GNUTLS) || defined(USE_GNUTLS_NETTLE)
+-#ifdef USE_GNUTLS
+-#include <gcrypt.h>
+-typedef gcry_mpi_t MP_t;
+-#define MP_new(m)	m = gcry_mpi_new(1)
+-#define MP_set_w(mpi, w)	gcry_mpi_set_ui(mpi, w)
+-#define MP_cmp(u, v)	gcry_mpi_cmp(u, v)
+-#define MP_set(u, v)	gcry_mpi_set(u, v)
+-#define MP_sub_w(mpi, w)	gcry_mpi_sub_ui(mpi, mpi, w)
+-#define MP_cmp_1(mpi)	gcry_mpi_cmp_ui(mpi, 1)
+-#define MP_modexp(r, y, q, p)	gcry_mpi_powm(r, y, q, p)
+-#define MP_free(mpi)	gcry_mpi_release(mpi)
+-#define MP_gethex(u, hex, res)	res = (gcry_mpi_scan(&u, GCRYMPI_FMT_HEX, hex, 0, 0) == 0)
+-#define MP_bytes(u)	(gcry_mpi_get_nbits(u) + 7) / 8
+-#define MP_setbin(u,buf,len)	gcry_mpi_print(GCRYMPI_FMT_USG,buf,len,NULL,u)
+-#define MP_getbin(u,buf,len)	gcry_mpi_scan(&u,GCRYMPI_FMT_USG,buf,len,NULL)
+-#else
++#elif defined(USE_GNUTLS)
+ #include <gmp.h>
+ #include <nettle/bignum.h>
+ typedef mpz_ptr MP_t;
+@@ -108,7 +92,6 @@ typedef mpz_ptr MP_t;
+ #define MP_bytes(u)	(mpz_sizeinbase(u, 2) + 7) / 8
+ #define MP_setbin(u,buf,len)	nettle_mpz_get_str_256(len,buf,u)
+ #define MP_getbin(u,buf,len)	u = malloc(sizeof(*u)); mpz_init2(u, 1); nettle_mpz_set_str_256_u(u,len,buf)
+-#endif
+ 
+ typedef struct MDH {
+   MP_t p;
+diff --git a/librtmp/handshake.h b/librtmp/handshake.h
+index 4c2ea7f..0438486 100644
+--- a/librtmp/handshake.h
++++ b/librtmp/handshake.h
+@@ -43,27 +43,10 @@ typedef arc4_context *	RC4_handle;
+ #define RC4_free(h)	free(h)
+ 
+ #elif defined(USE_GNUTLS)
+-#include <gcrypt.h>
+-#ifndef SHA256_DIGEST_LENGTH
+-#define SHA256_DIGEST_LENGTH	32
+-#endif
+-#define HMAC_CTX	gcry_md_hd_t
+-#define HMAC_setup(ctx, key, len)	gcry_md_open(&ctx, GCRY_MD_SHA256, GCRY_MD_FLAG_HMAC); gcry_md_setkey(ctx, key, len)
+-#define HMAC_crunch(ctx, buf, len)	gcry_md_write(ctx, buf, len)
+-#define HMAC_finish(ctx, dig, dlen)	dlen = SHA256_DIGEST_LENGTH; memcpy(dig, gcry_md_read(ctx, 0), dlen); gcry_md_close(ctx)
+-
+-typedef gcry_cipher_hd_t	RC4_handle;
+-#define	RC4_alloc(h)	gcry_cipher_open(h, GCRY_CIPHER_ARCFOUR, GCRY_CIPHER_MODE_STREAM, 0)
+-#define RC4_setkey(h,l,k)	gcry_cipher_setkey(h,k,l)
+-#define RC4_encrypt(h,l,d)	gcry_cipher_encrypt(h,(void *)d,l,NULL,0)
+-#define RC4_encrypt2(h,l,s,d)	gcry_cipher_encrypt(h,(void *)d,l,(void *)s,l)
+-#define RC4_free(h)	gcry_cipher_close(h)
+-
+-#elif defined(USE_GNUTLS_NETTLE)
+ #include <nettle/hmac.h>
+ #include <nettle/arcfour.h>
+ #ifndef SHA256_DIGEST_LENGTH
+-#define SHA256_DIGEST_LENGTH    32
++#define SHA256_DIGEST_LENGTH	32
+ #endif
+ #undef HMAC_CTX
+ #define HMAC_CTX	struct hmac_sha256_ctx
+diff --git a/librtmp/hashswf.c b/librtmp/hashswf.c
+index 8cefd3b..9f4e2c0 100644
+--- a/librtmp/hashswf.c
++++ b/librtmp/hashswf.c
+@@ -42,17 +42,6 @@
+ #define HMAC_finish(ctx, dig, dlen)	dlen = SHA256_DIGEST_LENGTH; sha2_hmac_finish(&ctx, dig)
+ #define HMAC_close(ctx)
+ #elif defined(USE_GNUTLS)
+-#include <gnutls/gnutls.h>
+-#include <gcrypt.h>
+-#ifndef SHA256_DIGEST_LENGTH
+-#define SHA256_DIGEST_LENGTH	32
+-#endif
+-#define HMAC_CTX	gcry_md_hd_t
+-#define HMAC_setup(ctx, key, len)	gcry_md_open(&ctx, GCRY_MD_SHA256, GCRY_MD_FLAG_HMAC); gcry_md_setkey(ctx, key, len)
+-#define HMAC_crunch(ctx, buf, len)	gcry_md_write(ctx, buf, len)
+-#define HMAC_finish(ctx, dig, dlen)	dlen = SHA256_DIGEST_LENGTH; memcpy(dig, gcry_md_read(ctx, 0), dlen)
+-#define HMAC_close(ctx)	gcry_md_close(ctx)
+-#elif defined(USE_GNUTLS_NETTLE)
+ #include <nettle/hmac.h>
+ #ifndef SHA256_DIGEST_LENGTH
+ #define SHA256_DIGEST_LENGTH	32
+diff --git a/librtmp/rtmp.c b/librtmp/rtmp.c
+index 5cd7b8d..52d0254 100644
+--- a/librtmp/rtmp.c
++++ b/librtmp/rtmp.c
+@@ -34,7 +34,7 @@
+ #ifdef CRYPTO
+ #ifdef USE_POLARSSL
+ #include <polarssl/havege.h>
+-#elif defined(USE_GNUTLS) || defined(USE_GNUTLS_NETTLE)
++#elif defined(USE_GNUTLS)
+ #include <gnutls/gnutls.h>
+ #else	/* USE_OPENSSL */
+ #include <openssl/ssl.h>
+@@ -204,7 +204,7 @@ RTMP_TLS_Init()
+   /* Do this regardless of NO_SSL, we use havege for rtmpe too */
+   RTMP_TLS_ctx = calloc(1,sizeof(struct tls_ctx));
+   havege_init(&RTMP_TLS_ctx->hs);
+-#elif (defined(USE_GNUTLS) || defined(USE_GNUTLS_NETTLE)) && !defined(NO_SSL)
++#elif defined(USE_GNUTLS) && !defined(NO_SSL)
+   /* Technically we need to initialize libgcrypt ourselves if
+    * we're not going to call gnutls_global_init(). Ignoring this
+    * for now.
+diff --git a/librtmp/rtmp_sys.h b/librtmp/rtmp_sys.h
+index 478c59f..c3fd4a6 100644
+--- a/librtmp/rtmp_sys.h
++++ b/librtmp/rtmp_sys.h
+@@ -81,7 +81,7 @@ typedef struct tls_ctx {
+ #define TLS_shutdown(s)	ssl_close_notify(s)
+ #define TLS_close(s)	ssl_free(s); free(s)
+ 
+-#elif defined(USE_GNUTLS) || defined(USE_GNUTLS_NETTLE)
++#elif defined(USE_GNUTLS)
+ #include <gnutls/gnutls.h>
+ typedef struct tls_ctx {
+ 	gnutls_certificate_credentials_t cred;
+commit 8e3064207fa7535baad07fd06b65630ec8b31a08
+Author: Martin Storsjo <martin@martin.st>
+Date:   Fri Jul 19 15:40:25 2013 +0300
+
+    Don't use non-public gnutls functions
+    
+    The internal functions gnutls_calc_dh_secret and gnutls_calc_dh_key
+    have changed signature in recent gnutls versions - don't use them
+    but manually do roughly the same as what they used to do before
+    using only public API functions.
+
+diff --git a/librtmp/dh.h b/librtmp/dh.h
+index e29587b..5fc3f32 100644
+--- a/librtmp/dh.h
++++ b/librtmp/dh.h
+@@ -79,6 +79,7 @@ static int MDH_compute_key(uint8_t *secret, size_t len, MP_t pub, MDH *dh)
+ #elif defined(USE_GNUTLS)
+ #include <gmp.h>
+ #include <nettle/bignum.h>
++#include <gnutls/crypto.h>
+ typedef mpz_ptr MP_t;
+ #define MP_new(m)	m = malloc(sizeof(*m)); mpz_init2(m, 1)
+ #define MP_set_w(mpi, w)	mpz_set_ui(mpi, w)
+@@ -104,21 +105,62 @@ typedef struct MDH {
+ #define	MDH_new()	calloc(1,sizeof(MDH))
+ #define MDH_free(dh)	do {MP_free(((MDH*)(dh))->p); MP_free(((MDH*)(dh))->g); MP_free(((MDH*)(dh))->pub_key); MP_free(((MDH*)(dh))->priv_key); free(dh);} while(0)
+ 
+-extern MP_t gnutls_calc_dh_secret(MP_t *priv, MP_t g, MP_t p);
+-extern MP_t gnutls_calc_dh_key(MP_t y, MP_t x, MP_t p);
++static int MDH_generate_key(MDH *dh)
++{
++  int num_bytes;
++  uint32_t seed;
++  gmp_randstate_t rs;
++
++  num_bytes = (mpz_sizeinbase(dh->p, 2) + 7) / 8 - 1;
++  if (num_bytes <= 0 || num_bytes > 18000)
++    return 0;
++
++  dh->priv_key = calloc(1, sizeof(*dh->priv_key));
++  if (!dh->priv_key)
++    return 0;
++  mpz_init2(dh->priv_key, 1);
++  gnutls_rnd(GNUTLS_RND_RANDOM, &seed, sizeof(seed));
++  gmp_randinit_mt(rs);
++  gmp_randseed_ui(rs, seed);
++  mpz_urandomb(dh->priv_key, rs, num_bytes);
++  gmp_randclear(rs);
++
++  dh->pub_key = calloc(1, sizeof(*dh->pub_key));
++  if (!dh->pub_key)
++    return 0;
++  mpz_init2(dh->pub_key, 1);
++  if (!dh->pub_key) {
++    mpz_clear(dh->priv_key);
++    free(dh->priv_key);
++    return 0;
++  }
++
++  mpz_powm(dh->pub_key, dh->g, dh->priv_key, dh->p);
++
++  return 1;
++}
+ 
+-#define MDH_generate_key(dh)	(dh->pub_key = gnutls_calc_dh_secret(&dh->priv_key, dh->g, dh->p))
+ static int MDH_compute_key(uint8_t *secret, size_t len, MP_t pub, MDH *dh)
+ {
+-  MP_t sec = gnutls_calc_dh_key(pub, dh->priv_key, dh->p);
+-  if (sec)
+-    {
+-	  MP_setbin(sec, secret, len);
+-	  MP_free(sec);
+-	  return 0;
+-	}
+-  else
++  mpz_ptr k;
++  int num_bytes;
++
++  num_bytes = (mpz_sizeinbase(dh->p, 2) + 7) / 8;
++  if (num_bytes <= 0 || num_bytes > 18000)
++    return -1;
++
++  k = calloc(1, sizeof(*k));
++  if (!k)
+     return -1;
++  mpz_init2(k, 1);
++
++  mpz_powm(k, pub, dh->priv_key, dh->p);
++  nettle_mpz_get_str_256(len, secret, k);
++  mpz_clear(k);
++  free(k);
++
++  /* return the length of the shared secret key like DH_compute_key */
++  return len;
+ }
+ 
+ #else /* USE_OPENSSL */

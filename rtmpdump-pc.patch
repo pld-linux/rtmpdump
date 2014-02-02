@@ -1,0 +1,21 @@
+--- rtmpdump-2.3/librtmp/librtmp.pc.in.orig	2010-06-30 21:58:34.000000000 +0200
++++ rtmpdump-2.3/librtmp/librtmp.pc.in	2014-02-02 11:13:00.969407808 +0100
+@@ -1,6 +1,6 @@
+ prefix=@prefix@
+ exec_prefix=${prefix}
+-libdir=${exec_prefix}/lib
++libdir=@libdir@
+ incdir=${prefix}/include
+ 
+ Name: librtmp
+--- rtmpdump-2.3/librtmp/Makefile.orig	2014-02-02 11:12:23.782742701 +0100
++++ rtmpdump-2.3/librtmp/Makefile	2014-02-02 11:13:36.359406323 +0100
+@@ -82,7 +82,7 @@
+ parseurl.lo: parseurl.c rtmp.h rtmp_sys.h log.h Makefile
+ 
+ librtmp.pc: librtmp.pc.in Makefile
+-	sed -e "s;@prefix@;$(prefix);" -e "s;@VERSION@;$(VERSION);" \
++	sed -e "s;@prefix@;$(prefix);" -e "s;@libdir@;$(libdir);" -e "s;@VERSION@;$(VERSION);" \
+ 		-e "s;@CRYPTO_REQ@;$(CRYPTO_REQ);" librtmp.pc.in > $@
+ 
+ install:	librtmp.la librtmp.pc

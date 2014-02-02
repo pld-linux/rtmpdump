@@ -1,8 +1,6 @@
-diff --git a/Makefile b/Makefile
-index 7470eb4..4f6cdb0 100644
---- a/Makefile
-+++ b/Makefile
-@@ -2,8 +2,10 @@ VERSION=v2.3
+--- rtmpdump-2.3/Makefile.orig	2014-02-02 11:00:29.162772691 +0100
++++ rtmpdump-2.3/Makefile	2014-02-02 11:02:29.859434291 +0100
+@@ -2,8 +2,10 @@
  
  prefix=/usr/local
  
@@ -13,7 +11,7 @@ index 7470eb4..4f6cdb0 100644
  
  SYS=posix
  #SYS=mingw
-@@ -40,7 +42,7 @@ THREADLIB_mingw=
+@@ -43,7 +45,7 @@
  THREADLIB=$(THREADLIB_$(SYS))
  SLIBS=$(THREADLIB) $(LIBS)
  
@@ -22,7 +20,7 @@ index 7470eb4..4f6cdb0 100644
  INCRTMP=librtmp/rtmp_sys.h librtmp/rtmp.h librtmp/log.h librtmp/amf.h
  
  EXT_posix=
-@@ -53,11 +55,11 @@ progs:	rtmpdump rtmpgw rtmpsrv rtmpsuck
+@@ -59,11 +61,11 @@
  
  install:	progs
  	-mkdir -p $(BINDIR) $(SBINDIR) $(MANDIR)/man1 $(MANDIR)/man8
@@ -37,46 +35,33 @@ index 7470eb4..4f6cdb0 100644
  
  clean:
  	rm -f *.o rtmpdump$(EXT) rtmpgw$(EXT) rtmpsrv$(EXT) rtmpsuck$(EXT)
-@@ -71,20 +73,25 @@ $(LIBRTMP): FORCE
- # note: $^ is GNU Make's equivalent to BSD $>
- # we use both since either make will ignore the one it doesn't recognize
+@@ -74,17 +76,19 @@
+ $(LIBRTMP): FORCE
+ 	@cd librtmp; $(MAKE) all
  
 +LINK=$(LIBTOOL) --tag=CC --mode=link $(CC) $(CFLAGS) $(LDFLAGS)
 +
- rtmpdump: rtmpdump.o $(LIBRTMP)
--	$(CC) $(LDFLAGS) $^ $> -o $@$(EXT) $(LIBS)
-+	$(LINK) $^ $> -o $@$(EXT) $(LIBS)
+ rtmpdump: rtmpdump.o
+-	$(CC) $(LDFLAGS) -o $@$(EXT) $@.o $(LIBS)
++	$(LINK) -o $@$(EXT) $@.o $(LIBS)
  
- rtmpsrv: rtmpsrv.o thread.o $(LIBRTMP)
--	$(CC) $(LDFLAGS) $^ $> -o $@$(EXT) $(SLIBS)
-+	$(LINK) $^ $> -o $@$(EXT) $(SLIBS)
+ rtmpsrv: rtmpsrv.o thread.o
+-	$(CC) $(LDFLAGS) -o $@$(EXT) $@.o thread.o $(SLIBS)
++	$(LINK) -o $@$(EXT) $@.o thread.o $(SLIBS)
  
- rtmpsuck: rtmpsuck.o thread.o $(LIBRTMP)
--	$(CC) $(LDFLAGS) $^ $> -o $@$(EXT) $(SLIBS)
-+	$(LINK) $^ $> -o $@$(EXT) $(SLIBS)
+ rtmpsuck: rtmpsuck.o thread.o
+-	$(CC) $(LDFLAGS) -o $@$(EXT) $@.o thread.o $(SLIBS)
++	$(LINK) -o $@$(EXT) $@.o thread.o $(SLIBS)
  
- rtmpgw: rtmpgw.o thread.o $(LIBRTMP)
--	$(CC) $(LDFLAGS) $^ $> -o $@$(EXT) $(SLIBS)
-+	$(LINK) $^ $> -o $@$(EXT) $(SLIBS)
-+
-+%.lo:	%.c
-+	$(LIBTOOL) --tag=CC --mode=compile $(CC) $(CFLAGS) -c -o $@ $<
+ rtmpgw: rtmpgw.o thread.o
+-	$(CC) $(LDFLAGS) -o $@$(EXT) $@.o thread.o $(SLIBS)
++	$(LINK) -o $@$(EXT) $@.o thread.o $(SLIBS)
  
--rtmpgw.o: rtmpgw.c $(INCRTMP) Makefile
--rtmpdump.o: rtmpdump.c $(INCRTMP) Makefile
--rtmpsrv.o: rtmpsrv.c $(INCRTMP) Makefile
--rtmpsuck.o: rtmpsuck.c $(INCRTMP) Makefile
--thread.o: thread.c thread.h
-+rtmpgw.lo: rtmpgw.c $(INCRTMP) Makefile
-+rtmpdump.lo: rtmpdump.c $(INCRTMP) Makefile
-+rtmpsrv.lo: rtmpsrv.c $(INCRTMP) Makefile
-+rtmpsuck.lo: rtmpsuck.c $(INCRTMP) Makefile
-+thread.lo: thread.c thread.h
-diff --git a/librtmp/Makefile b/librtmp/Makefile
-index 6774db7..1782fb0 100644
---- a/librtmp/Makefile
-+++ b/librtmp/Makefile
-@@ -2,9 +2,11 @@ VERSION=v2.3
+ rtmpgw.o: rtmpgw.c $(INCRTMP) Makefile
+ rtmpdump.o: rtmpdump.c $(INCRTMP) Makefile
+--- rtmpdump-2.3/librtmp/Makefile.orig	2014-02-02 11:09:46.109415985 +0100
++++ rtmpdump-2.3/librtmp/Makefile	2014-02-02 11:12:23.782742701 +0100
+@@ -2,9 +2,11 @@
  
  prefix=/usr/local
  
@@ -88,7 +73,7 @@ index 6774db7..1782fb0 100644
  
  SYS=posix
  CRYPTO=OPENSSL
-@@ -50,42 +52,32 @@ INCDIR=$(DESTDIR)$(incdir)
+@@ -60,46 +62,32 @@
  LIBDIR=$(DESTDIR)$(libdir)
  MANDIR=$(DESTDIR)$(mandir)
  
@@ -108,16 +93,17 @@ index 6774db7..1782fb0 100644
 +	$(LIBTOOL) --tag=CC --mode=link $(CC) $(CFLAGS) $(LDFLAGS) -rpath $(libdir) -o $@ $^ $> $(CRYPTO_LIB)
  
 -librtmp.$(SO_EXT): $(OBJS)
--	$(CC) -shared -Wl,-soname,$@ $(LDFLAGS) -o $@ $^ $> $(CRYPTO_LIB)
+-	$(CC) $(SO_LDFLAGS) $(LDFLAGS) -o $@ $^ $> $(CRYPTO_LIB)
 -	ln -sf $@ librtmp.so
-+%.lo:	%.c
-+	$(LIBTOOL) --tag=CC --mode=compile $(CC) $(CFLAGS) -c -o $@ $<
- 
+-
 -log.o: log.c log.h Makefile
 -rtmp.o: rtmp.c rtmp.h rtmp_sys.h handshake.h dh.h log.h amf.h Makefile
 -amf.o: amf.c amf.h bytes.h log.h Makefile
 -hashswf.o: hashswf.c http.h rtmp.h rtmp_sys.h Makefile
 -parseurl.o: parseurl.c rtmp.h rtmp_sys.h log.h Makefile
++%.lo:	%.c
++	$(LIBTOOL) --tag=CC --mode=compile $(CC) $(CFLAGS) -c -o $@ $<
++
 +log.lo: log.c log.h Makefile
 +rtmp.lo: rtmp.c rtmp.h rtmp_sys.h handshake.h dh.h log.h amf.h Makefile
 +amf.lo: amf.c amf.h bytes.h log.h Makefile
@@ -135,13 +121,17 @@ index 6774db7..1782fb0 100644
  	-mkdir -p $(INCDIR) $(LIBDIR)/pkgconfig $(MANDIR)/man3
  	cp amf.h http.h log.h rtmp.h $(INCDIR)
 -	cp librtmp.a $(LIBDIR)
-+	$(LIBTOOL) --tag=CC --mode=install $(INSTALL) librtmp.la $(LIBDIR)/
++	$(LIBTOOL) --tag=CC --mode=install $(INSTALL) librtmp.la $(LIBDIR)
  	cp librtmp.pc $(LIBDIR)/pkgconfig
  	cp librtmp.3 $(MANDIR)/man3
 -
--install_so.0:	librtmp.so.0
--	cp librtmp.so.0 $(LIBDIR)
--	cd $(LIBDIR); ln -sf librtmp.so.0 librtmp.so
+-install_so.$(SO_VERSION):	librtmp.$(SO_EXT)
+-	cp librtmp.$(SO_EXT) $(LIBDIR)
+-	cd $(LIBDIR); ln -sf librtmp.$(SO_EXT) librtmp.so
+-
+-install_$(SO_VERSION).dylib:	librtmp.$(SO_EXT)
+-	cp librtmp.$(SO_EXT) $(LIBDIR)
+-	cd $(LIBDIR); ln -sf librtmp.$(SO_EXT) librtmp.dylib
 -
 -install_dll:	librtmp.dll
 -	cp librtmp.dll $(BINDIR)

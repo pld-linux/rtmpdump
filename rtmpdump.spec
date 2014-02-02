@@ -6,12 +6,14 @@ Summary:	A utility for getting files from RTMP servers
 Summary(pl.UTF-8):	Narzędzie do pobierania plików z sewerów RTMP
 Name:		rtmpdump
 Version:	2.3
-Release:	3
+Release:	4
 License:	GPL v2
 Group:		Applications/Networking
 Source0:	http://rtmpdump.mplayerhq.hu/download/%{name}-%{version}.tgz
 # Source0-md5:	eb961f31cd55f0acf5aad1a7b900ef59
-Patch0:		%{name}-libtool.patch
+Patch0:		%{name}-gnutls.patch
+Patch1:		%{name}-libtool.patch
+Patch2:		%{name}-pc.patch
 URL:		http://rtmpdump.mplayerhq.hu/
 %if %{with gnutls}
 BuildRequires:	gnutls-devel
@@ -81,6 +83,8 @@ Statyczna wersja biblioteki RTMP.
 %prep
 %setup -q
 %patch0 -p1
+%patch1 -p1
+%patch2 -p1
 
 %build
 %{__make} \
