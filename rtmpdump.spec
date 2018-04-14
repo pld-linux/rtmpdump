@@ -5,18 +5,21 @@
 Summary:	A utility for getting files from RTMP servers
 Summary(pl.UTF-8):	Narzędzie do pobierania plików z sewerów RTMP
 Name:		rtmpdump
-Version:	2.3
-Release:	5
+Version:	2.4
+%define	gitref	fa8646daeb19dfd12c181f7d19de708d623704c0
+%define	snap	20151224
+%define	rel	1
+Release:	1.%{snap}.%{rel}
 License:	GPL v2
 Group:		Applications/Networking
-Source0:	http://rtmpdump.mplayerhq.hu/download/%{name}-%{version}.tgz
-# Source0-md5:	eb961f31cd55f0acf5aad1a7b900ef59
-Patch0:		%{name}-gnutls.patch
-Patch1:		%{name}-libtool.patch
-Patch2:		%{name}-pc.patch
+#Source0:	http://rtmpdump.mplayerhq.hu/download/%{name}-%{version}.tgz
+Source0:	https://git.ffmpeg.org/gitweb/rtmpdump.git/snapshot/fa8646daeb19dfd12c181f7d19de708d623704c0.tar.gz?fakename=/%{name}-%{snap}.tar.gz
+# Source0-md5:	d9572fe5e1dedabb68b7949ec84308dd
+Patch0:		%{name}-libtool.patch
 URL:		http://rtmpdump.mplayerhq.hu/
 %if %{with gnutls}
-BuildRequires:	gnutls-devel
+# nettle based
+BuildRequires:	gnutls-devel >= 2.12
 %else
 BuildRequires:	openssl-devel >= 0.9.8
 %endif
@@ -55,7 +58,7 @@ License:	LGPL v2.1+
 Group:		Development/Libraries
 Requires:	librtmp = %{version}-%{release}
 %if %{with gnutls}
-Requires:	gnutls-devel
+Requires:	gnutls-devel >= 2.12
 %else
 Requires:	openssl-devel >= 0.9.8
 %endif
@@ -81,10 +84,8 @@ Static version of RTMP library.
 Statyczna wersja biblioteki RTMP.
 
 %prep
-%setup -q
+%setup -q -n %{name}-fa8646d
 %patch0 -p1
-%patch1 -p1
-%patch2 -p1
 
 %build
 %{__make} \

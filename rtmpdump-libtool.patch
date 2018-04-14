@@ -59,11 +59,11 @@
  
  rtmpgw.o: rtmpgw.c $(INCRTMP) Makefile
  rtmpdump.o: rtmpdump.c $(INCRTMP) Makefile
---- rtmpdump-2.3/librtmp/Makefile.orig	2014-02-02 11:09:46.109415985 +0100
-+++ rtmpdump-2.3/librtmp/Makefile	2014-02-02 11:12:23.782742701 +0100
-@@ -2,9 +2,11 @@
- 
- prefix=/usr/local
+--- rtmpdump-fa8646d/librtmp/Makefile.orig	2015-12-23 20:09:27.000000000 +0100
++++ rtmpdump-fa8646d/librtmp/Makefile	2018-04-14 19:42:42.380311763 +0200
+@@ -11,9 +11,11 @@
+ LIBDIR=$(DESTDIR)$(libdir)
+ MANDIR=$(DESTDIR)$(mandir)
  
 +LIBTOOL=libtool -v
  CC=$(CROSS_COMPILE)gcc
@@ -73,9 +73,9 @@
  
  SYS=posix
  CRYPTO=OPENSSL
-@@ -60,46 +62,32 @@
- LIBDIR=$(DESTDIR)$(libdir)
- MANDIR=$(DESTDIR)$(mandir)
+@@ -78,25 +80,24 @@
+ LDFLAGS=$(XLDFLAGS)
+ 
  
 -OBJS=rtmp.o log.o amf.o hashswf.o parseurl.o
 +OBJS=rtmp.lo log.lo amf.lo hashswf.lo parseurl.lo
@@ -84,7 +84,7 @@
 +all:	librtmp.la
  
  clean:
--	rm -f *.o *.a *.so *.$(SO_EXT)
+-	rm -f *.o *.a *.$(SOX) *$(SO_EXT) librtmp.pc
 +	$(LIBTOOL) --tag=CC --mode=clean rm
  
 -librtmp.a: $(OBJS)
@@ -92,9 +92,9 @@
 +librtmp.la: $(OBJS)
 +	$(LIBTOOL) --tag=CC --mode=link $(CC) $(CFLAGS) $(LDFLAGS) -rpath $(libdir) -o $@ $^ $> $(CRYPTO_LIB)
  
--librtmp.$(SO_EXT): $(OBJS)
+-librtmp$(SO_EXT): $(OBJS)
 -	$(CC) $(SO_LDFLAGS) $(LDFLAGS) -o $@ $^ $> $(CRYPTO_LIB)
--	ln -sf $@ librtmp.so
+-	ln -sf $@ librtmp.$(SOX)
 -
 -log.o: log.c log.h Makefile
 -rtmp.o: rtmp.c rtmp.h rtmp_sys.h handshake.h dh.h log.h amf.h Makefile
@@ -111,27 +111,24 @@
 +parseurl.lo: parseurl.c rtmp.h rtmp_sys.h log.h Makefile
  
  librtmp.pc: librtmp.pc.in Makefile
- 	sed -e "s;@prefix@;$(prefix);" -e "s;@VERSION@;$(VERSION);" \
- 		-e "s;@CRYPTO_REQ@;$(CRYPTO_REQ);" librtmp.pc.in > $@
+ 	sed -e "s;@prefix@;$(prefix);" -e "s;@libdir@;$(libdir);" \
+@@ -105,17 +106,10 @@
+ 		-e "s;@PUBLIC_LIBS@;$(PUBLIC_LIBS);" \
+ 		-e "s;@PRIVATE_LIBS@;$(PRIVATE_LIBS);" librtmp.pc.in > $@
  
 -install:	install_base $(SO_INST)
 -
 -install_base:	librtmp.a librtmp.pc
 +install:	librtmp.la librtmp.pc
- 	-mkdir -p $(INCDIR) $(LIBDIR)/pkgconfig $(MANDIR)/man3
+ 	-mkdir -p $(INCDIR) $(LIBDIR)/pkgconfig $(MANDIR)/man3 $(SODIR)
  	cp amf.h http.h log.h rtmp.h $(INCDIR)
 -	cp librtmp.a $(LIBDIR)
 +	$(LIBTOOL) --tag=CC --mode=install $(INSTALL) librtmp.la $(LIBDIR)
  	cp librtmp.pc $(LIBDIR)/pkgconfig
  	cp librtmp.3 $(MANDIR)/man3
+ 
+-install_so:	librtmp$(SO_EXT)
+-	cp librtmp$(SO_EXT) $(SODIR)
+-	$(INSTALL_IMPLIB)
+-	cd $(SODIR); ln -sf librtmp$(SO_EXT) librtmp.$(SOX)
 -
--install_so.$(SO_VERSION):	librtmp.$(SO_EXT)
--	cp librtmp.$(SO_EXT) $(LIBDIR)
--	cd $(LIBDIR); ln -sf librtmp.$(SO_EXT) librtmp.so
--
--install_$(SO_VERSION).dylib:	librtmp.$(SO_EXT)
--	cp librtmp.$(SO_EXT) $(LIBDIR)
--	cd $(LIBDIR); ln -sf librtmp.$(SO_EXT) librtmp.dylib
--
--install_dll:	librtmp.dll
--	cp librtmp.dll $(BINDIR)
