@@ -1,6 +1,6 @@
 #
 # Conditional build:
-%bcond_with	gnutls		# GNU TLS instead of OpenSSL (use same as curl)
+%bcond_without	gnutls		# GNU TLS instead of OpenSSL (use same as curl)
 #
 Summary:	A utility for getting files from RTMP servers
 Summary(pl.UTF-8):	Narzędzie do pobierania plików z sewerów RTMP
@@ -8,7 +8,7 @@ Name:		rtmpdump
 Version:	2.4
 %define	gitref	fa8646daeb19dfd12c181f7d19de708d623704c0
 %define	snap	20151224
-%define	rel	2
+%define	rel	3
 Release:	1.%{snap}.%{rel}
 License:	GPL v2
 Group:		Applications/Networking
