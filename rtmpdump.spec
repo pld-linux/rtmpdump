@@ -6,15 +6,15 @@ Summary:	A utility for getting files from RTMP servers
 Summary(pl.UTF-8):	Narzędzie do pobierania plików z sewerów RTMP
 Name:		rtmpdump
 Version:	2.4
-%define	gitref	fa8646daeb19dfd12c181f7d19de708d623704c0
-%define	snap	20151224
-%define	rel	4
+%define	gitref	c5f04a58fc2aeea6296ca7c44ee4734c18401aa3
+%define	snap	20190331
+%define	rel	1
 Release:	1.%{snap}.%{rel}
 License:	GPL v2
 Group:		Applications/Networking
 #Source0:	http://rtmpdump.mplayerhq.hu/download/%{name}-%{version}.tgz
-Source0:	https://git.ffmpeg.org/gitweb/rtmpdump.git/snapshot/fa8646daeb19dfd12c181f7d19de708d623704c0.tar.gz?fakename=/%{name}-%{snap}.tar.gz
-# Source0-md5:	d9572fe5e1dedabb68b7949ec84308dd
+Source0:	https://git.ffmpeg.org/gitweb/rtmpdump.git/snapshot/%{gitref}.tar.gz?fakename=/%{name}-%{snap}.tar.gz
+# Source0-md5:	64fc96a898c038d75bbaf13325b0fda2
 Patch0:		%{name}-libtool.patch
 URL:		http://rtmpdump.mplayerhq.hu/
 %if %{with gnutls}
@@ -84,7 +84,7 @@ Static version of RTMP library.
 Statyczna wersja biblioteki RTMP.
 
 %prep
-%setup -q -n %{name}-fa8646d
+%setup -q -n %{name}-c5f04a5
 %patch0 -p1
 
 %build
