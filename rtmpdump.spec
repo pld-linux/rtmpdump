@@ -8,7 +8,7 @@ Name:		rtmpdump
 Version:	2.4
 %define	gitref	c5f04a58fc2aeea6296ca7c44ee4734c18401aa3
 %define	snap	20190331
-%define	rel	1
+%define	rel	2
 Release:	1.%{snap}.%{rel}
 License:	GPL v2
 Group:		Applications/Networking
