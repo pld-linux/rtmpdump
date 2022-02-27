@@ -1,6 +1,7 @@
---- rtmpdump-2.3/Makefile.orig	2014-02-02 11:00:29.162772691 +0100
-+++ rtmpdump-2.3/Makefile	2014-02-02 11:02:29.859434291 +0100
-@@ -2,8 +2,10 @@
+diff -urNp -x '*.orig' rtmpdump-c5f04a5.org/Makefile rtmpdump-c5f04a5/Makefile
+--- rtmpdump-c5f04a5.org/Makefile	2019-03-30 22:33:00.000000000 +0100
++++ rtmpdump-c5f04a5/Makefile	2022-02-27 01:58:10.811841072 +0100
+@@ -2,8 +2,10 @@ VERSION=v2.4
  
  prefix=/usr/local
  
@@ -11,7 +12,7 @@
  
  SYS=posix
  #SYS=mingw
-@@ -43,7 +45,7 @@
+@@ -44,7 +46,7 @@ THREADLIB_mingw=
  THREADLIB=$(THREADLIB_$(SYS))
  SLIBS=$(THREADLIB) $(LIBS)
  
@@ -20,9 +21,9 @@
  INCRTMP=librtmp/rtmp_sys.h librtmp/rtmp.h librtmp/log.h librtmp/amf.h
  
  EXT_posix=
-@@ -59,11 +61,11 @@
+@@ -60,11 +62,11 @@ $(PROGS): $(LIBRTMP)
  
- install:	progs
+ install:	$(PROGS)
  	-mkdir -p $(BINDIR) $(SBINDIR) $(MANDIR)/man1 $(MANDIR)/man8
 -	cp rtmpdump$(EXT) $(BINDIR)
 -	cp rtmpgw$(EXT) rtmpsrv$(EXT) rtmpsuck$(EXT) $(SBINDIR)
@@ -35,7 +36,7 @@
  
  clean:
  	rm -f *.o rtmpdump$(EXT) rtmpgw$(EXT) rtmpsrv$(EXT) rtmpsuck$(EXT)
-@@ -74,17 +76,19 @@
+@@ -75,17 +77,19 @@ FORCE:
  $(LIBRTMP): FORCE
  	@cd librtmp; $(MAKE) all
  
@@ -59,9 +60,10 @@
  
  rtmpgw.o: rtmpgw.c $(INCRTMP) Makefile
  rtmpdump.o: rtmpdump.c $(INCRTMP) Makefile
---- rtmpdump-fa8646d/librtmp/Makefile.orig	2015-12-23 20:09:27.000000000 +0100
-+++ rtmpdump-fa8646d/librtmp/Makefile	2018-04-14 19:42:42.380311763 +0200
-@@ -11,9 +11,11 @@
+diff -urNp -x '*.orig' rtmpdump-c5f04a5.org/librtmp/Makefile rtmpdump-c5f04a5/librtmp/Makefile
+--- rtmpdump-c5f04a5.org/librtmp/Makefile	2019-03-30 22:33:00.000000000 +0100
++++ rtmpdump-c5f04a5/librtmp/Makefile	2022-02-27 01:58:10.811841072 +0100
+@@ -11,9 +11,11 @@ INCDIR=$(DESTDIR)$(incdir)
  LIBDIR=$(DESTDIR)$(libdir)
  MANDIR=$(DESTDIR)$(mandir)
  
@@ -73,7 +75,7 @@
  
  SYS=posix
  CRYPTO=OPENSSL
-@@ -78,25 +80,24 @@
+@@ -78,25 +80,24 @@ CFLAGS=-Wall $(XCFLAGS) $(INC) $(DEF) $(
  LDFLAGS=$(XLDFLAGS)
  
  
@@ -112,7 +114,7 @@
  
  librtmp.pc: librtmp.pc.in Makefile
  	sed -e "s;@prefix@;$(prefix);" -e "s;@libdir@;$(libdir);" \
-@@ -105,17 +106,10 @@
+@@ -105,17 +106,10 @@ librtmp.pc: librtmp.pc.in Makefile
  		-e "s;@PUBLIC_LIBS@;$(PUBLIC_LIBS);" \
  		-e "s;@PRIVATE_LIBS@;$(PRIVATE_LIBS);" librtmp.pc.in > $@
  
