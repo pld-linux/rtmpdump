@@ -5,16 +5,18 @@
 Summary:	A utility for getting files from RTMP servers
 Summary(pl.UTF-8):	Narzędzie do pobierania plików z sewerów RTMP
 Name:		rtmpdump
-Version:	2.4
-%define	gitref	c5f04a58fc2aeea6296ca7c44ee4734c18401aa3
-%define	snap	20190331
-%define	rel	2
+Version:	2.6
+%define	gitref	6f6bb1353fc84f4cc37138baa99f586750028a01
+%define	snap	20240302
+%define	rel	1
 Release:	1.%{snap}.%{rel}
 License:	GPL v2
 Group:		Applications/Networking
 #Source0:	http://rtmpdump.mplayerhq.hu/download/%{name}-%{version}.tgz
-Source0:	https://git.ffmpeg.org/gitweb/rtmpdump.git/snapshot/%{gitref}.tar.gz?fakename=/%{name}-%{snap}.tar.gz
-# Source0-md5:	64fc96a898c038d75bbaf13325b0fda2
+#Source0:	https://git.ffmpeg.org/gitweb/rtmpdump.git/snapshot/%{gitref}.tar.gz#/%{name}-%{smap}.tar.gz
+# snapshots no longer allowed, use just git archive
+Source0:	%{name}-%{snap}.tar.gz
+# Source0-md5:	58095263a0dff40d8dcc374d8a15d6d7
 Patch0:		%{name}-libtool.patch
 URL:		http://rtmpdump.mplayerhq.hu/
 %if %{with gnutls}
@@ -84,7 +86,7 @@ Static version of RTMP library.
 Statyczna wersja biblioteki RTMP.
 
 %prep
-%setup -q -n %{name}-c5f04a5
+%setup -q -n %{name}-%{snap}
 %patch0 -p1
 
 %build
@@ -103,6 +105,9 @@ rm -rf $RPM_BUILD_ROOT
 	libdir=%{_libdir} \
 	mandir=%{_mandir} \
 	prefix=%{_prefix}
+
+# obsoleted by pkg-config
+%{__rm} $RPM_BUILD_ROOT%{_libdir}/librtmp.la
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -123,12 +128,11 @@ rm -rf $RPM_BUILD_ROOT
 %files -n librtmp
 %defattr(644,root,root,755)
 %attr(755,root,root) %{_libdir}/librtmp.so.*.*.*
-%attr(755,root,root) %ghost %{_libdir}/librtmp.so.0
+%attr(755,root,root) %ghost %{_libdir}/librtmp.so.1
 
 %files -n librtmp-devel
 %defattr(644,root,root,755)
 %attr(755,root,root) %{_libdir}/librtmp.so
-%{_libdir}/librtmp.la
 %{_includedir}/librtmp
 %{_pkgconfigdir}/librtmp.pc
 %{_mandir}/man3/librtmp.3*

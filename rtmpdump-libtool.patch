@@ -60,9 +60,8 @@ diff -urNp -x '*.orig' rtmpdump-c5f04a5.org/Makefile rtmpdump-c5f04a5/Makefile
  
  rtmpgw.o: rtmpgw.c $(INCRTMP) Makefile
  rtmpdump.o: rtmpdump.c $(INCRTMP) Makefile
-diff -urNp -x '*.orig' rtmpdump-c5f04a5.org/librtmp/Makefile rtmpdump-c5f04a5/librtmp/Makefile
---- rtmpdump-c5f04a5.org/librtmp/Makefile	2019-03-30 22:33:00.000000000 +0100
-+++ rtmpdump-c5f04a5/librtmp/Makefile	2022-02-27 01:58:10.811841072 +0100
+--- rtmpdump-20240302/librtmp/Makefile.orig	2024-03-01 16:57:47.000000000 +0100
++++ rtmpdump-20240302/librtmp/Makefile	2024-05-26 18:12:08.755987192 +0200
 @@ -11,9 +11,11 @@ INCDIR=$(DESTDIR)$(incdir)
  LIBDIR=$(DESTDIR)$(libdir)
  MANDIR=$(DESTDIR)$(mandir)
@@ -92,7 +91,7 @@ diff -urNp -x '*.orig' rtmpdump-c5f04a5.org/librtmp/Makefile rtmpdump-c5f04a5/li
 -librtmp.a: $(OBJS)
 -	$(AR) rs $@ $?
 +librtmp.la: $(OBJS)
-+	$(LIBTOOL) --tag=CC --mode=link $(CC) $(CFLAGS) $(LDFLAGS) -rpath $(libdir) -o $@ $^ $> $(CRYPTO_LIB)
++	$(LIBTOOL) --tag=CC --mode=link $(CC) $(CFLAGS) $(LDFLAGS) -rpath $(libdir) -o $@ $^ $> $(CRYPTO_LIB) -version-info $(SO_VERSION):0:0
  
 -librtmp$(SO_EXT): $(OBJS)
 -	$(CC) $(SO_LDFLAGS) $(LDFLAGS) -o $@ $^ $> $(CRYPTO_LIB)
@@ -114,7 +113,7 @@ diff -urNp -x '*.orig' rtmpdump-c5f04a5.org/librtmp/Makefile rtmpdump-c5f04a5/li
  
  librtmp.pc: librtmp.pc.in Makefile
  	sed -e "s;@prefix@;$(prefix);" -e "s;@libdir@;$(libdir);" \
-@@ -105,17 +106,10 @@ librtmp.pc: librtmp.pc.in Makefile
+@@ -105,18 +106,10 @@ librtmp.pc: librtmp.pc.in Makefile
  		-e "s;@PUBLIC_LIBS@;$(PUBLIC_LIBS);" \
  		-e "s;@PRIVATE_LIBS@;$(PRIVATE_LIBS);" librtmp.pc.in > $@
  
@@ -122,7 +121,7 @@ diff -urNp -x '*.orig' rtmpdump-c5f04a5.org/librtmp/Makefile rtmpdump-c5f04a5/li
 -
 -install_base:	librtmp.a librtmp.pc
 +install:	librtmp.la librtmp.pc
- 	-mkdir -p $(INCDIR) $(LIBDIR)/pkgconfig $(MANDIR)/man3 $(SODIR)
+ 	-mkdir -p $(INCDIR) $(LIBDIR)/pkgconfig $(MANDIR)/man3
  	cp amf.h http.h log.h rtmp.h $(INCDIR)
 -	cp librtmp.a $(LIBDIR)
 +	$(LIBTOOL) --tag=CC --mode=install $(INSTALL) librtmp.la $(LIBDIR)
@@ -130,6 +129,7 @@ diff -urNp -x '*.orig' rtmpdump-c5f04a5.org/librtmp/Makefile rtmpdump-c5f04a5/li
  	cp librtmp.3 $(MANDIR)/man3
  
 -install_so:	librtmp$(SO_EXT)
+-	-mkdir -p $(SODIR)
 -	cp librtmp$(SO_EXT) $(SODIR)
 -	$(INSTALL_IMPLIB)
 -	cd $(SODIR); ln -sf librtmp$(SO_EXT) librtmp.$(SOX)
