@@ -87,7 +87,7 @@ Statyczna wersja biblioteki RTMP.
 
 %prep
 %setup -q -n %{name}-%{snap}
-%patch0 -p1
+%patch -P0 -p1
 
 %build
 %{__make} \
